@@ -1,0 +1,19 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public class DropZone : MonoBehaviour, IDropHandler
+{
+    public ChocManager chocManager; // Reference to ChocManager
+
+    public void OnDrop(PointerEventData eventData)
+    {
+        GameObject droppedChocolate = eventData.pointerDrag; // Get the chocolate being dragged
+        if (droppedChocolate != null && droppedChocolate.CompareTag("DraggableChocolate"))
+        {
+            // Set the parent to this drop zone
+            droppedChocolate.transform.SetParent(transform);
+            // Call CheckAnswer in ChocManager
+            chocManager.CheckAnswer();
+        }
+    }
+}
