@@ -1,0 +1,47 @@
+using UnityEngine;
+using UnityEngine.EventSystems;
+
+public class ChocDrag : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+{
+    private CanvasGroup canvasGroup;
+    private RectTransform rectTransform;
+    private Transform originalParent;
+
+    void Awake()
+    {
+        canvasGroup = GetComponent<CanvasGroup>();
+        rectTransform = GetComponent<RectTransform>();
+        originalParent = transform.parent; // Store original parent
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        canvasGroup.alpha = 0.6f; // Make the chocolate semi-transparent
+        canvasGroup.blocksRaycasts = false; // Allow raycasts to pass through
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        // Move the chocolate with the mouse
+        rectTransform.anchoredPosition += eventData.delta / rectTransform.lossyScale.x; // Adjust for scale
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        canvasGroup.alpha = 1.0f; // Reset transparency
+        canvasGroup.blocksRaycasts = true; // Block raycasts again
+
+        // Check if dropped in the tray zone
+        if (eventData.pointerCurrentRaycast.gameObject != null && eventData.pointerCurrentRaycast.gameObject.CompareTag("TrayZone"))
+        {
+            // Set the parent to the tray zone
+            transform.SetParent(eventData.pointerCurrentRaycast.gameObject.transform);
+        }
+        else
+        {
+            // Snap back to original position if not dropped in the tray
+            transform.SetParent(originalParent);
+            rectTransform.anchoredPosition = Vector2.zero; // Reset position
+        }
+    }
+}
