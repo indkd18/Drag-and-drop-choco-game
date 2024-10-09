@@ -1,0 +1,132 @@
+using System.Collections.Generic;
+using UnityEngine;
+using TMPro;
+
+public class ChocManager : MonoBehaviour
+{
+    public GameObject readyChocolatePrefab; // Prefab for ready chocolates
+    public GameObject draggableChocolatePrefab; // Prefab for draggable chocolates
+    public Transform trayZone; // The drop area where chocolates must be placed
+    public Transform draggableZone; // The area where draggable chocolates spawn
+    public TMP_Text equationText; // TextMeshPro UI Text for the equation
+    public int numberOfRounds = 3;
+
+    private int currentRound = 0;
+    private int firstNumber; // The first number in the equation
+    private int missingNumber; // The missing number in the equation
+    private List<GameObject> spawnedChocolates = new List<GameObject>();
+
+    public int chocolatesPerRow = 5; // Define how many chocolates per row
+    public float chocolateSpacing = 60f; // Space between chocolates
+
+    void Start()
+    {
+        StartGame();
+    }
+
+    void StartGame()
+    {
+        currentRound = 0;
+        NextRound();
+    }
+
+    void NextRound()
+    {
+        ClearChocolates();
+        if (currentRound < numberOfRounds)
+        {
+            GenerateEquation();
+            SpawnChocolates();
+            currentRound++;
+        }
+        else
+        {
+            EndGame();
+        }
+    }
+
+    void GenerateEquation()
+    {
+        firstNumber = Random.Range(1, 10);
+        int correctAnswer = Random.Range(1, 10);
+        missingNumber = correctAnswer; // The missing number is now the correct answer
+
+        equationText.text = $"{firstNumber} + ___ = {firstNumber + missingNumber}"; // Set the equation
+    }
+
+    void SpawnChocolates()
+    {
+        // Spawn ready chocolates in tray zone based on the first number
+        for (int i = 0; i < firstNumber; i++)
+        {
+            Vector2 readyPosition = GetSpawnPosition(i, chocolatesPerRow, trayZone);
+            SpawnChocolate(trayZone, readyChocolatePrefab, readyPosition);
+        }
+
+        // Spawn draggable chocolates in draggable zone
+        for (int i = 0; i < missingNumber; i++) // Spawn the number of chocolates equal to the missing number
+        {
+            Vector2 draggablePosition = GetSpawnPosition(i, chocolatesPerRow, draggableZone);
+            SpawnChocolate(draggableZone, draggableChocolatePrefab, draggablePosition);
+        }
+    }
+
+    Vector2 GetSpawnPosition(int index, int itemsPerRow, Transform parentZone)
+    {
+        int row = index / itemsPerRow;
+        int column = index % itemsPerRow;
+
+        RectTransform parentRect = parentZone.GetComponent<RectTransform>();
+        float x = (column * chocolateSpacing) - (parentRect.rect.width / 2) + (chocolateSpacing / 2);
+        float y = -(row * chocolateSpacing) + (parentRect.rect.height / 2) - (chocolateSpacing / 2);
+
+        return new Vector2(x, y);
+    }
+
+    void SpawnChocolate(Transform zone, GameObject chocolatePrefab, Vector2 spawnPosition)
+    {
+        GameObject chocolate = Instantiate(chocolatePrefab, zone);
+        RectTransform rectTransform = chocolate.GetComponent<RectTransform>();
+        rectTransform.anchoredPosition = spawnPosition; // Set position relative to the zone
+        spawnedChocolates.Add(chocolate);
+    }
+
+    void ClearChocolates()
+    {
+        foreach (GameObject chocolate in spawnedChocolates)
+        {
+            Destroy(chocolate);
+        }
+
+        spawnedChocolates.Clear();
+    }
+
+    public void CheckAnswer()
+    {
+        // Count how many chocolates are placed in the tray
+        int chocolatesInTray = trayZone.childCount;
+        Debug.Log($"Required: {missingNumber}, Found: {chocolatesInTray}");
+
+        // Log the missing number for debugging
+        Debug.Log($"Missing Number: {missingNumber}"); // Log missing number
+        Debug.Log($"Chocolates in Tray: {chocolatesInTray}"); // Log chocolates in tray
+
+        // Check if the correct number of chocolates is found
+        if (chocolatesInTray == missingNumber)
+
+        {
+            Debug.Log("Correct answer!");
+            NextRound(); // Proceed to the next round if the answer is correct
+        }
+        else
+        {
+            Debug.Log("Incorrect answer!"); // Notify incorrect answer
+        }
+    }
+
+    void EndGame()
+    {
+        Debug.Log("Game Finished!");
+    }
+
+}
